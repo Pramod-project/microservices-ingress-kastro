@@ -86,23 +86,49 @@ Access Jenkins and setup Jenkins
 2.1.2 Install Docker
 vi docker.sh ----> Paste the below content ---->
 #!/bin/bash
-# Update package manager repositories
-sudo apt-get update
-# Install necessary dependencies
-sudo apt-get install -y ca-certificates curl
-# Create directory for Docker GPG key
+set -e
+
+echo "==> Updating system..."
+sudo apt update -y
+sudo apt install -y ca-certificates curl gnupg lsb-release
+
+echo "==> Adding Docker GPG key..."
 sudo install -m 0755 -d /etc/apt/keyrings
-# Download Docker's GPG key
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-# Ensure proper permissions for the key
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-# Add Docker repository to Apt sources
-echo "deb \[arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \\
-$(. /etc/os-release \&\& echo "$VERSION\_CODENAME") stable" | \\
-sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-# Update package manager repositories
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo "==> Adding Docker repository..."
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+echo "==> Installing Docker..."
+sudo apt update -y
+sudo apt install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
+
+echo "==> Ensuring docker group exists..."
+if ! getent group docker > /dev/null; then
+  sudo groupadd docker
+fi
+
+echo "==> Adding current user to docker group..."
+sudo usermod -aG docker "$USER"
+
+echo "==> Enabling Docker service..."
+sudo systemctl enable docker
+sudo systemctl start docker
+
+echo "==> Docker installation complete!"
+docker --version
+echo "==> Log out and back in to use Docker without sudo."
 
 ----> esc ----> :wq ----> sudo chmod +x docker.sh ----> ./docker.sh
 
@@ -221,7 +247,7 @@ echo "==> eksctl installation complete!"
 sudo chmod +x ctl.sh ----> ./ctl.sh
 
 4.7. Create EKS Cluster
-eksctl create cluster --name kastro-cluster --region us-east-1 --node-type t2.medium --zones us-east-1a,us-east-1b
+run as it is ----    eksctl create cluster --name kastro-cluster --region us-east-1 --node-type t2.medium --zones us-east-1a,us-east-1b
 
 4.8. Modifying the permissions
 sudo usermod -aG docker jenkins
@@ -544,6 +570,7 @@ TO GET ARGO CD PASSWORD:
 ------------------------------------------
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ----> Copy the password and provide in argo cd console ----> You will see the argo cd console ----> Follow as explained in the video
+
 
 
 
