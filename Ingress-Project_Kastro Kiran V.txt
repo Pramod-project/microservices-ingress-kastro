@@ -7,7 +7,7 @@
 =================== 										 			
 Step 1: Basic Setup
 ===================
-1.1. Push the code from Local to Remote
+1.1. Push the code from Local to  Remote
 Use a Personal Access Token (HTTPS method)
 🔧 Step-by-Step:
 Go to GitHub → Developer Settings > Personal Access Tokens
@@ -572,6 +572,7 @@ TO GET ARGO CD PASSWORD:
 ------------------------------------------
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ----> Copy the password and provide in argo cd console ----> You will see the argo cd console ----> Follow as explained in the video
+
 
 
 
